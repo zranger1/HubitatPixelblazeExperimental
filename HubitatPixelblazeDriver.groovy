@@ -1,10 +1,7 @@
 /**
  *
- *  File: HubitatPixelblazeDriverX
+ *  File: HubitatPixelblazeDriver.groovy
  *  Platform: Hubitat
- *
- *  ALPHA VERSION - SUPPORTS SUBDIVIDING LED STRIPS INTO INDEPENDENTLY
- *  CONTROLLABLE SEGMENTS.  
  *
  *  Allows hubitat to control a Pixelblaze addressable LED controller. 
  *  Information on the Pixelblaze is available at www.electromage.com.
@@ -18,10 +15,10 @@
  *    ----        ---           ---       ----
  *    2019-7-31   0.1           JEM       Created
  *    2019-7-31   0.11          JEM       added SwitchLevel capability, JSON bug fixes
- *    2019-12-19  1.00          JEM       lazy connection strategy, auto reconnect, 
+ *    2019-12-19  1.0.0         JEM       lazy connection strategy, auto reconnect, 
  *                                        auto pattern list refresh, new on/off method, more...
- *    2020-02-05  1.01          JEM       support for latest Pixelblaze firmware features
- *    2020-07-10  1.10a         JEM       support for zones as child devices
+ *    2020-02-05  1.0.1         JEM       support for latest Pixelblaze firmware features
+ *    2020-07-22  1.1.1         JEM       support for dividing strip into multiple segments 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -39,9 +36,9 @@ import hubitat.helper.HexUtils
 /**
  * Constants and configuration data
  */
-def version() {"v1.10a"}
+def version() {"1.1.1"}
 
-def idleWaitTime() { 60 } // seconds till connection goes idle
+def idleWaitTime() { 120 } // seconds till connection goes idle
 def defaultBrightness() { 50 } // use this brightness if we can't determine device state.  
 
 def PATTERN_NOT_SET() { "(unknown)" } 
@@ -52,7 +49,7 @@ def WS_DISCONNECTED() { "not connected" }
 def WS_WAITING() { "waiting" }
 
 metadata {
-    definition (name: "Pixelblaze Alpha X", namespace: "jem", author: "JEM", importUrl: "") {
+    definition (name: "Pixelblaze Controller", namespace: "jem", author: "JEM", importUrl: "") {
         capability "Switch"
         capability "SwitchLevel"
         capability "Initialize"
@@ -97,12 +94,12 @@ def logDebug(String str) {
  * initialization 
  */ 
 def installed(){
-    log.info "Pixelblaze device handler ${version()} installed."       
+    log.info "Pixelblaze device handler v${version()} installed."       
     initialize()
 }
 
 def updated() {
-    log.info "Pixelblaze handler updated. ${version()}."
+    log.info "Pixelblaze handler updated. v${version()}."
     initialize()
 }
 
@@ -128,8 +125,6 @@ def initialize() {
       return
     }
     
-
-  
     runInMillis(1000,pbOpenSocket)
     runInMillis(1500,awaitConnection,[data: "initializePostConnection"])   
 }
@@ -273,8 +268,8 @@ def parseVariableList(Map json) {
     logDebug("    found variable list.")
 
 // does the list specify multiple segments?    
-    if (json.vars.containsKey("__n_zones")) {
-       device.updateDataValue("segments",json.vars.__n_zones.toString())
+    if (json.vars.containsKey("__n_segments")) {
+       device.updateDataValue("segments",json.vars.__n_segments.toString())
     }  
     else {
       return;
