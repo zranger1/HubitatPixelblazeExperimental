@@ -288,6 +288,7 @@ def parseVariableList(Map json) {
         seg.updateDataValue("brightness", status[3].toString())
         seg.updateDataValue("effect",status[4].toString())
         seg.updateDataValue("size", status[5].toString())
+        seg.updateDataValue("speed",status[6].toString())
         
         seg.updateState(seg)
     }  
