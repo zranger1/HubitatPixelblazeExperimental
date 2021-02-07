@@ -270,7 +270,7 @@ function preGlitter(z,a,delta) {
 
 function renderGlitter(z,a,index) {
   var b = pRandom(GetVar(z,1) * index) 
-  hsv(0,1-(b*0.03),b*b*b);
+  hsv(a[__hue],1-(b*0.03),b*b*b);
 }
 
 // EFFECT: rainbow bounce 
