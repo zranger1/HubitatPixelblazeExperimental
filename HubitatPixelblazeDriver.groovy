@@ -18,7 +18,7 @@
  *    2020-07-22  1.1.1   JEM       support for dividing strip into multiple segments 
  *    2020-12-05  1.1.3   JEM       Hubitat Package Manager support
  *    2021-02-02  2.0.1   JEM       v2 release: Color control/enhanced multisegment support
- *    2021-12-27  2.0.2b  JEM       BETA - support for using getVariable()in RM
+ *    2021-12-27  2.0.3b  JEM       BETA - support for using getVariable()in RM
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -43,6 +43,7 @@ def idleWaitTime() { 120}       // minimum seconds till connection goes idle
 def defaultBrightness() { 50 }  // use this brightness if we can't determine device state.  
 def maxSegments() { 12 }        // maximum number of segments allowed for multisegment setups
 def segmentDescriptorSize() { 7 }
+def waitForPixelblazeVars() { 100 }   // how long we give the Pixelblaze to respond to websocket requests (ms)
 
 def UNKNOWN() { "(unknown)" } 
 def EMPTYSTR() {""}
@@ -856,23 +857,18 @@ def getVariables() {
     sendMsg("{ \"getVars\" : true }")
 }
 
-// retrieve the (numerical) value of a single export variable
-// from the active pattern and save it in the getVariableResult 
-// attribute
-def getVariable(String varName) {
-  // make sure the variable list is as up to date as possible
-  getVariables()
-  val = null;
-
+// retrieves requested variable value after async websocket
+// query has returned (if all is working)
+def getVariableWorker(String varName) {
   // get most recently saved list and look for the value we want. 
   try {
-    String frame = device.getDataValue("varList");
+    String frame = device.getDataValue("varList");      
     json = new groovy.json.JsonSlurper().parseText(frame)
       
     if (json == null){
       logDebug "getVariable: JsonSlurper returned null"
     }
-    else if (json.vars.containsKey(varName)) {
+    else if (json?.vars?.containsKey(varName)) {
       val = json.vars[varName];        
     } 
   }
@@ -882,14 +878,29 @@ def getVariable(String varName) {
   }  
     
   logDebug "getVariable ${varName} returned: ${val}"     
-  sendEvent([name: "getVariableResult", value: val, isStateChange: false])
+  sendEvent([name: "getVariableResult", value: val, isStateChange: false])    
+}
+
+// retrieve the (numerical) value of a single export variable
+// from the active pattern and save it in the getVariableResult 
+// attribute
+def getVariable(String varName) {
+  String frame;
+    
+  // make sure the variable list is as up to date as possible
+  getVariables()
+  val = null;
+   
+  // elaborate way of faking Thread.sleep().  Why, hubitat, why?  
+  runInMillis(waitForPixelblazeVars(),'getVariableWorker',[data : varName]);
+  pauseExecution(waitForPixelblazeVars() + 20);
 }
 
 // Update the list of pattern names and IDs
 def getPatterns() {
     setLastPatternUpdate()
     sendMsg("{ \"listPrograms\" : true }")  
-    pauseExecution(100)    
+    pauseExecution(100);
 }
 
 def on() {       
