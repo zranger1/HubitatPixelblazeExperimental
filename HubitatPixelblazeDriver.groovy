@@ -744,11 +744,12 @@ def getPatternId(String name) {
 // the currently active pattern if available.
 def getControls() {
   id = device.getDataValue("activePatternId")
-  if (id.length() < 1) {
+  len = id ? id.length() : 0;
+  if (len < 1) {
     logDebug("getControls: Active pattern not available.")
-    return 
+  } else {
+    sendMsg("{ \"getControls\" : ${id} }")  
   }
-  sendMsg("{ \"getControls\" : ${id} }")  
 }
 
 // sets values for the specified Web UI control in the current pattern.
