@@ -8,17 +8,18 @@
  *  Requirements:
  *    A Pixelblaze controller on the local LAN. 
  *
- *    Date        Ver     Who       What
- *    ----        ---     ---       ----
- *    2019-7-31   0.1     JEM       Created
- *    2019-7-31   0.11    JEM       added SwitchLevel capability, JSON bug fixes
- *    2019-12-19  1.0.0   JEM       lazy connection strategy, auto reconnect, 
- *                                  auto pattern list refresh, new on/off method, more...
- *    2020-02-05  1.0.1   JEM       support for latest Pixelblaze firmware features
- *    2020-07-22  1.1.1   JEM       support for dividing strip into multiple segments 
- *    2020-12-05  1.1.3   JEM       Hubitat Package Manager support
- *    2021-02-02  2.0.1   JEM       v2 release: Color control/enhanced multisegment support
- *    2021-12-27  2.0.3b  JEM       BETA - support for using getVariable()in RM
+ *    Date        Ver     Who    What
+ *    ----        ---     ---    ----
+ *    2019-7-31   0.1     JEM    Created
+ *    2019-7-31   0.11    JEM    added SwitchLevel capability, JSON bug fixes
+ *    2019-12-19  1.0.0   JEM    lazy connection strategy, auto reconnect, 
+ *                               auto pattern list refresh, new on/off method, more...
+ *    2020-02-05  1.0.1   JEM    support for latest Pixelblaze firmware features
+ *    2020-07-22  1.1.1   JEM    support for dividing strip into multiple segments 
+ *    2020-12-05  1.1.3   JEM    Hubitat Package Manager support
+ *    2021-02-02  2.0.1   JEM    v2 release: Color control/enhanced multisegment support
+ *    2021-12-27  2.0.2   JEM    Expanded automation support & getVariable()/getVariableResult
+ *    2022-01-11  2.0.3b  JEM    EXPERIMENTAL - support for setVariables in RM, etc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -36,7 +37,7 @@ import hubitat.helper.HexUtils
 /**
  * SECTION TAG: Constants and configuration data
  */
-def version() {"2.0.2b"}
+def version() {"2.0.3b"}
 
 def PORT() { ":81" }            // Pixelblaze's websocket port. Must include colon
 def idleWaitTime() { 120}       // minimum seconds till connection goes idle
@@ -83,6 +84,7 @@ metadata {
         command "resetSegments"
         command "getVariable",[[name: "Name*", type: "STRING"]]        
         command "getVariables"
+        command "setVariables",["STRING"]
         command "setIPAddress",["STRING"]        
 
         attribute "activePattern","STRING"
